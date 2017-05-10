@@ -26,7 +26,8 @@ lazy val root = (project in file(".")).settings(
     "com.github.seratch.com.veact" %% "scala-ssh" % "0.8.0-1" % "provided",
     "org.bouncycastle" %  "bcprov-jdk16"          % "1.46"             % "provided",
     "ch.qos.logback"   %  "logback-classic"       % "1.1.7"            % "test",
-    "org.scalatest"    %% "scalatest"             % "3.0.1"            % "test"
+    "org.scalatest"    %% "scalatest"             % "3.0.1"            % "test",
+    "io.findify"       %% "s3mock"                % "0.2.0"            % "test"
   ),
   sbtPlugin := false,
   transitiveClassifiers in Global := Seq(Artifact.SourceClassifier),
