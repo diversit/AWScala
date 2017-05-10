@@ -9,6 +9,18 @@ AWScala enables Scala developers to easily work with Amazon Web Services in the 
 
 Though AWScala objects basically extend AWS SDK for Java APIs, you can use them with less stress on Scala REPL or `sbt console`.
 
+## Changes regarding original
+This is a fork of seratch/AWScala repo.
+I wanted to have up-to-date AWS libraries so I made these changes:
+- Updated AWS Java SDK dependencies to 1.11.126 (fixed a compile issue in EMR class)
+- Changed S3 to have a AmazonS3 property named 'client' instead of S3 extending AmazonS3 to allow an AmazonS3Client to be build using an AmazonS3ClientBuilder, which is currently the preferred way. Directly creating an AmazonS3Client instance via a constructor is now deprecated.
+- Updated S3Spec so S3 can now be tested using S3Mock so no real S3 instance/connection is needed anymore.
+- Updated logging
+-- Updated logback-classic dependency to 1.2.2
+-- Excluded commons-logging dependency from all AWS Java SDK dependencies.
+-- Added jcl-over-slf4j so now also the AWS Java SDK logging is over SLF4J.
+-- Updated logback-test.xml configuration.
+
 ## Supported Services
 
 http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/
