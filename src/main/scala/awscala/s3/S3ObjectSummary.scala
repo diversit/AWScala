@@ -11,7 +11,7 @@ object S3ObjectSummary {
     size = obj.getSize,
     storageClass = obj.getStorageClass,
     eTag = obj.getETag,
-    lastModified = new DateTime(obj.getLastModified),
+    lastModified = DateTime.from(obj.getLastModified),
     owner = obj.getOwner
   )
 }

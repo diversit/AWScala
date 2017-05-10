@@ -11,7 +11,7 @@ object PutObjectResult {
     versionId = obj.getVersionId,
     eTag = obj.getETag,
     contentMd5 = null,
-    expirationTime = new DateTime(obj.getExpirationTime),
+    expirationTime = DateTime.from(obj.getExpirationTime),
     expirationTimeRuleId = obj.getExpirationTimeRuleId,
     sseAlgorithm = obj.getSSEAlgorithm
   )
@@ -22,7 +22,7 @@ object PutObjectResult {
     versionId = obj.getVersionId,
     eTag = obj.getETag,
     contentMd5 = obj.getContentMd5,
-    expirationTime = new DateTime(obj.getExpirationTime),
+    expirationTime = DateTime.from(obj.getExpirationTime),
     expirationTimeRuleId = obj.getExpirationTimeRuleId,
     sseAlgorithm = obj.getSSEAlgorithm
   )

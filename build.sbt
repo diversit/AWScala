@@ -11,23 +11,26 @@ lazy val root = (project in file(".")).settings(
   publishMavenStyle := true,
   resolvers += "spray repo" at "http://repo.spray.io",
   libraryDependencies ++= Seq(
-    "com.amazonaws"    %  "aws-java-sdk-iam"      % awsJavaSdkVersion exclude("commons-logging", "commons-logging"),
-    "com.amazonaws"    %  "aws-java-sdk-sts"      % awsJavaSdkVersion exclude("commons-logging", "commons-logging"),
-    "com.amazonaws"    %  "aws-java-sdk-ec2"      % awsJavaSdkVersion exclude("commons-logging", "commons-logging"),
-    "com.amazonaws"    %  "aws-java-sdk-s3"       % awsJavaSdkVersion exclude("commons-logging", "commons-logging"),
-    "com.amazonaws"    %  "aws-java-sdk-sqs"      % awsJavaSdkVersion exclude("commons-logging", "commons-logging"),
-    "com.amazonaws"    %  "aws-java-sdk-emr"      % awsJavaSdkVersion exclude("commons-logging", "commons-logging"),
-    "com.amazonaws"    %  "aws-java-sdk-redshift" % awsJavaSdkVersion exclude("commons-logging", "commons-logging"),
-    "com.amazonaws"    %  "aws-java-sdk-dynamodb" % awsJavaSdkVersion exclude("commons-logging", "commons-logging"),
-    "com.amazonaws"    %  "aws-java-sdk-simpledb" % awsJavaSdkVersion exclude("commons-logging", "commons-logging"),
+    // exclude dependencies directly on 'core' so do not have to add exclusions to all other aws-java dependencies.
+    "com.amazonaws"    %  "aws-java-sdk-core"     % awsJavaSdkVersion excludeAll(
+      // ExclusionRule(organization = "joda-time"), cannot remove dependency since Amazon classes like DateUtils depend on it.
+      ExclusionRule(organization = "commons-logging")
+    ),
+    "com.amazonaws"    %  "aws-java-sdk-iam"      % awsJavaSdkVersion,
+    "com.amazonaws"    %  "aws-java-sdk-sts"      % awsJavaSdkVersion,
+    "com.amazonaws"    %  "aws-java-sdk-ec2"      % awsJavaSdkVersion,
+    "com.amazonaws"    %  "aws-java-sdk-s3"       % awsJavaSdkVersion,
+    "com.amazonaws"    %  "aws-java-sdk-sqs"      % awsJavaSdkVersion,
+    "com.amazonaws"    %  "aws-java-sdk-emr"      % awsJavaSdkVersion,
+    "com.amazonaws"    %  "aws-java-sdk-redshift" % awsJavaSdkVersion,
+    "com.amazonaws"    %  "aws-java-sdk-dynamodb" % awsJavaSdkVersion,
+    "com.amazonaws"    %  "aws-java-sdk-simpledb" % awsJavaSdkVersion,
     "org.slf4j"        %  "jcl-over-slf4j"        % "1.7.25", // do aws libs logging over slf4j
-    "joda-time"        %  "joda-time"             % "2.9.9",
-    "org.joda"         %  "joda-convert"          % "1.8.3",
     "com.github.seratch.com.veact" %% "scala-ssh" % "0.8.0-1" % "provided",
-    "org.bouncycastle" %  "bcprov-jdk16"          % "1.46"             % "provided",
-    "ch.qos.logback"   %  "logback-classic"       % "1.2.2"            % "test",
-    "org.scalatest"    %% "scalatest"             % "3.0.1"            % "test",
-    "io.findify"       %% "s3mock"                % "0.2.0"            % "test"
+    "org.bouncycastle" %  "bcprov-jdk16"          % "1.46"    % "provided",
+    "ch.qos.logback"   %  "logback-classic"       % "1.2.2"   % "test",
+    "org.scalatest"    %% "scalatest"             % "3.0.1"   % "test",
+    "io.findify"       %% "s3mock"                % "0.2.0"   % "test"
   ),
   sbtPlugin := false,
   transitiveClassifiers in Global := Seq(Artifact.SourceClassifier),

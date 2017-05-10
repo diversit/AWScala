@@ -9,7 +9,7 @@ object Event {
     sourceIdentifier = e.getSourceIdentifier,
     sourceType = aws.model.SourceType.fromValue(e.getSourceType),
     message = e.getMessage,
-    createdAt = new DateTime(e.getDate)
+    createdAt = DateTime.from(e.getDate)
   )
 }
 
