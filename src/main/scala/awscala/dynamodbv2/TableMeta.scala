@@ -16,7 +16,7 @@ object TableMeta {
       indexes.asScala.map(i => LocalSecondaryIndexMeta(i)).toSeq
     }.getOrElse(Nil),
     provisionedThroughput = ProvisionedThroughputMeta(t.getProvisionedThroughput),
-    createdAt = new DateTime(t.getCreationDateTime)
+    createdAt = DateTime.from(t.getCreationDateTime)
   )
 }
 
@@ -81,8 +81,8 @@ object ProvisionedThroughputMeta {
     numberOfDecreasesToday = p.getNumberOfDecreasesToday,
     readCapacityUnits = p.getReadCapacityUnits,
     writeCapacityUnits = p.getWriteCapacityUnits,
-    lastDecreasedAt = new DateTime(p.getLastDecreaseDateTime),
-    lastIncreasedAt = new DateTime(p.getLastIncreaseDateTime)
+    lastDecreasedAt = DateTime.from(p.getLastDecreaseDateTime),
+    lastIncreasedAt = DateTime.from(p.getLastIncreaseDateTime)
   )
 }
 case class ProvisionedThroughputMeta(

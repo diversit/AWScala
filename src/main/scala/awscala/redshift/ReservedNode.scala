@@ -21,7 +21,7 @@ object ReservedNode {
       amount = c.getRecurringChargeAmount,
       frequency = c.getRecurringChargeFrequency
     )).toSeq,
-    startedAt = new DateTime(n.getStartTime)
+    startedAt = DateTime.from(n.getStartTime)
   )
 }
 

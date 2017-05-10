@@ -7,14 +7,14 @@ object VirtualMFADevice {
 
   def apply(user: User, g: aws.model.MFADevice): VirtualMFADevice = new VirtualMFADevice(
     base32StringSeed = None,
-    enabledAt = new DateTime(g.getEnableDate),
+    enabledAt = DateTime.from(g.getEnableDate),
     qrCodePng = None,
     serialNumber = g.getSerialNumber,
     user = user
   )
   def apply(g: aws.model.VirtualMFADevice): VirtualMFADevice = new VirtualMFADevice(
     base32StringSeed = Some(g.getBase32StringSeed),
-    enabledAt = new DateTime(g.getEnableDate),
+    enabledAt = DateTime.from(g.getEnableDate),
     qrCodePng = Some(g.getQRCodePNG),
     serialNumber = g.getSerialNumber,
     user = User(g.getUser)

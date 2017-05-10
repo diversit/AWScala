@@ -11,7 +11,7 @@ object Role {
     arn = g.getArn,
     path = g.getPath,
     assumeRolePolicyDocument = g.getAssumeRolePolicyDocument,
-    createdAt = new DateTime(g.getCreateDate)
+    createdAt = DateTime.from(g.getCreateDate)
   )
 }
 

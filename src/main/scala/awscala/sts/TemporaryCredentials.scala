@@ -9,7 +9,7 @@ object TemporaryCredentials {
     accessKeyId = c.getAccessKeyId,
     secretAccessKey = c.getSecretAccessKey,
     sessionToken = c.getSessionToken,
-    expiration = new DateTime(c.getExpiration)
+    expiration = DateTime.from(c.getExpiration)
   )
 }
 

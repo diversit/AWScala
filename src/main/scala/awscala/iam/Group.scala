@@ -10,7 +10,7 @@ object Group {
     name = g.getGroupName,
     arn = g.getArn,
     path = g.getPath,
-    createdAt = new DateTime(g.getCreateDate)
+    createdAt = DateTime.from(g.getCreateDate)
   )
 }
 

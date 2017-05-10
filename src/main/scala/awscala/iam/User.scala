@@ -10,7 +10,7 @@ object User {
     name = g.getUserName,
     arn = g.getArn,
     path = g.getPath,
-    createdAt = new DateTime(g.getCreateDate)
+    createdAt = DateTime.from(g.getCreateDate)
   )
 }
 

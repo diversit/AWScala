@@ -213,7 +213,7 @@ trait EMR extends aws.AmazonElasticMapReduce {
   def runningClusters() = clusters(Seq("RUNNING"))
 
   def recentClusters(duration: Duration = 1 hour) =
-    clusterSummaries(Nil, None, Some(new DateTime().minusMillis(duration.toMillis.toInt).toDate())).toList.sortBy(x => x.getStatus().getTimeline().getCreationDateTime()) map { x => toCluster(x) }
+    clusterSummaries(Nil, None, Some(DateTime.now().minusNanos(duration.toNanos).toDate)).toList.sortBy(x => x.getStatus().getTimeline().getCreationDateTime()) map { x => toCluster(x) }
 
   def clusterSummaries(clusterStates: Seq[String] = Nil, createdBefore: Option[java.util.Date] = None, createdAfter: Option[java.util.Date] = None): Seq[ClusterSummary] = {
     import aws.model.ListClustersResult
