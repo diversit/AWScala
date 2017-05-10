@@ -21,6 +21,7 @@ I wanted to have up-to-date AWS libraries so I made these changes:
   - Added jcl-over-slf4j so now also the AWS Java SDK logging is over SLF4J.
   - Updated logback-test.xml configuration.
 - Replaced joda-time's DateTime with java 8's OffsetDateTime.
+- Added S3.putObjectAsPublicRead with InputStream argument.
 
 ## Supported Services
 
