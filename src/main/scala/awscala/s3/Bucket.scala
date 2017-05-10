@@ -26,8 +26,8 @@ case class Bucket(name: String) extends aws.model.Bucket(name) {
   def acl(acl: AccessControlList)(implicit s3: S3) = s3.bucketAcl(this, acl)
 
   // object metadata
-  def getMetadata(key: String)(implicit s3: S3) = s3.getObjectMetadata(name, key)
-  def getMetadata(key: String, versionId: String)(implicit s3: S3) = s3.getObjectMetadata(new GetObjectMetadataRequest(name, key, versionId))
+  def getMetadata(key: String)(implicit s3: S3) = s3.client.getObjectMetadata(name, key)
+  def getMetadata(key: String, versionId: String)(implicit s3: S3) = s3.client.getObjectMetadata(new GetObjectMetadataRequest(name, key, versionId))
 
   // object
   def get(key: String)(implicit s3: S3) = getObject(key)
@@ -59,7 +59,7 @@ case class Bucket(name: String) extends aws.model.Bucket(name) {
   def putObject(key: String, inputStream: InputStream, metadata: aws.model.ObjectMetadata)(implicit s3: S3) = s3.putObject(this, key, inputStream, metadata)
   def putObjectAsPublicRead(key: String, bytes: Array[Byte], metadata: aws.model.ObjectMetadata)(implicit s3: S3) = s3.putObjectAsPublicRead(this, key, bytes, metadata)
 
-  def delete(key: String)(implicit s3: S3) = s3.deleteObject(name, key)
+  def delete(key: String)(implicit s3: S3) = s3.client.deleteObject(name, key)
   def delete(obj: S3Object)(implicit s3: S3) = s3.deleteObject(obj)
   def deleteObject(obj: S3Object)(implicit s3: S3) = s3.deleteObject(obj)
   def deleteObjects(objs: Seq[S3Object])(implicit s3: S3) = s3.deleteObjects(objs)
@@ -73,7 +73,7 @@ case class Bucket(name: String) extends aws.model.Bucket(name) {
   def versioningConfig(bucket: Bucket)(implicit s3: S3) = s3.versioningConfig(this)
   def websiteConfig(bucket: Bucket)(implicit s3: S3) = s3.websiteConfig(this)
 
-  def destroy()(implicit s3: S3): Unit = s3.deleteBucket(name)
+  def destroy()(implicit s3: S3): Unit = s3.client.deleteBucket(name)
 }
 
 object BucketPolicy {

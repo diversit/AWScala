@@ -1,18 +1,45 @@
 package awscala
 
-import awscala._, s3._
-
+import com.amazonaws.auth.{AWSCredentials, AWSCredentialsProvider, AnonymousAWSCredentials}
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
+import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import io.findify.s3mock.S3Mock
+import s3._
 import org.slf4j._
 import org.scalatest._
 
-class S3Spec extends FlatSpec with Matchers {
+class S3Spec extends FlatSpec with Matchers with BeforeAndAfterAll {
+
+  var s3mock: S3Mock = _
+
+  val builder = AmazonS3ClientBuilder.standard()
+    // Note: url must NOT be 'localhost' since then an isValidIp check inside AWS classes fails
+    //       and then virtual addressing is used which means the bucketname is prepended to the domainname
+    //       which then cannot be resolved anymore to the local S3Mock.
+    .withEndpointConfiguration(new EndpointConfiguration("http://127.0.0.1:8001", "us-east-1"))
+    .withCredentials(new AWSCredentialsProvider {
+      val credentials = new AnonymousAWSCredentials()
+      override def getCredentials: AWSCredentials = credentials
+      override def refresh(): Unit = ()
+    })
+
+  override protected def beforeAll(): Unit = {
+    s3mock = S3Mock(port = 8001, dir = "/tmp/s3")
+    s3mock.start
+  }
+
+  override protected def afterAll(): Unit = {
+    s3mock.stop
+  }
 
   behavior of "S3"
 
   val log = LoggerFactory.getLogger(this.getClass)
 
   it should "handle buckets with > 1000 objects in them " in {
-    implicit val s3 = S3.at(Region.Tokyo)
+
+    implicit val s3 = S3.apply(builder)
+//    implicit val s3 = S3.apply(credentialProvider)(Region.Tokyo)
 
     // buckets
     val buckets = s3.buckets
@@ -32,13 +59,13 @@ class S3Spec extends FlatSpec with Matchers {
     val summaries = bucket.objectSummaries.toList
 
     summaries foreach {
-      o => { log.info("deleting ${o.getKey}"); s3.deleteObject(bucket.name, o.getKey) }
+      o => { log.info(s"deleting ${o.getKey}"); s3.client.deleteObject(bucket.name, o.getKey) }
     }
     bucket.destroy()
   }
 
   it should "provide cool APIs" in {
-    implicit val s3 = S3.at(Region.Tokyo)
+    implicit val s3 = S3.apply(builder)
 
     // buckets
     val buckets = s3.buckets
