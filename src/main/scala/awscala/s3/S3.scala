@@ -241,16 +241,22 @@ trait S3 {
   def putObject(bucket: Bucket, key: String, bytes: Array[Byte], metadata: aws.model.ObjectMetadata): PutObjectResult =
     putObject(bucket, key, new ByteArrayInputStream(bytes), metadata)
 
+  def putObjectAsPublicRead(bucket: Bucket, key: String, bytes: Array[Byte], metadata: aws.model.ObjectMetadata): PutObjectResult = {
+    PutObjectResult(bucket, key, client.putObject(
+      new aws.model.PutObjectRequest(bucket.name, key, new ByteArrayInputStream(bytes), metadata)
+        .withCannedAcl(aws.model.CannedAccessControlList.PublicRead)
+    ))
+  }
+
   def putObject(bucket: Bucket, key: String, inputStream: InputStream, metadata: aws.model.ObjectMetadata): PutObjectResult =
     PutObjectResult(bucket, key, client.putObject(
       new aws.model.PutObjectRequest(bucket.name, key, inputStream, metadata)
     ))
 
-  def putObjectAsPublicRead(bucket: Bucket, key: String, bytes: Array[Byte], metadata: aws.model.ObjectMetadata): PutObjectResult = {
+  def putObjectAsPublicRead(bucket: Bucket, key: String, inputStream: InputStream, metadata: aws.model.ObjectMetadata): PutObjectResult = {
     PutObjectResult(bucket, key, client.putObject(
-      new aws.model.PutObjectRequest(bucket.name, key,
-        new ByteArrayInputStream(bytes),
-        metadata).withCannedAcl(aws.model.CannedAccessControlList.PublicRead)
+      new aws.model.PutObjectRequest(bucket.name, key, inputStream, metadata)
+        .withCannedAcl(aws.model.CannedAccessControlList.PublicRead)
     ))
   }
 
