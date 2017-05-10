@@ -1,11 +1,11 @@
 package awscala.s3
 
-import java.io.{ByteArrayInputStream, File, InputStream}
+import java.io.{ ByteArrayInputStream, File, InputStream }
 
 import awscala._
 import com.amazonaws.ClientConfiguration
-import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
-import com.amazonaws.services.{s3 => aws}
+import com.amazonaws.services.s3.{ AmazonS3, AmazonS3ClientBuilder }
+import com.amazonaws.services.{ s3 => aws }
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
@@ -310,7 +310,7 @@ class S3Client(credentialsProvider: CredentialsProvider = CredentialsLoader.load
     .withCredentials(credentialsProvider)
     .build()
 
-//  override def createBucket(name: String): Bucket = super.createBucket(name)
+  //  override def createBucket(name: String): Bucket = super.createBucket(name)
 }
 
 /**
@@ -327,7 +327,7 @@ class ConfiguredS3Client(clientConfiguration: ClientConfiguration, credentialsPr
     .withClientConfiguration(clientConfiguration)
     .build()
 
-//  override def createBucket(name: String): Bucket = super.createBucket(name)
+  //  override def createBucket(name: String): Bucket = super.createBucket(name)
 }
 
 class BuildS3Client(builder: AmazonS3ClientBuilder) extends S3 {
