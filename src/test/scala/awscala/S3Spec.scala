@@ -1,6 +1,6 @@
 package awscala
 
-import com.amazonaws.auth.{AWSCredentials, AWSCredentialsProvider, AnonymousAWSCredentials}
+import com.amazonaws.auth.{ AWSCredentials, AWSCredentialsProvider, AnonymousAWSCredentials }
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import io.findify.s3mock.S3Mock

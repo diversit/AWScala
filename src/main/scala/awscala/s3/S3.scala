@@ -324,6 +324,7 @@ class S3Client(credentialsProvider: CredentialsProvider = CredentialsLoader.load
  *
  * @param clientConfiguration ClientConfiguration
  * @param credentialsProvider CredentialsProvider
+ * @deprecated Old way of constructing [[AmazonS3]] instance. Use builder instance.
  */
 class ConfiguredS3Client(clientConfiguration: ClientConfiguration, credentialsProvider: CredentialsProvider = CredentialsLoader.load())
     extends S3 {
@@ -336,6 +337,13 @@ class ConfiguredS3Client(clientConfiguration: ClientConfiguration, credentialsPr
   //  override def createBucket(name: String): Bucket = super.createBucket(name)
 }
 
+/**
+ * New S3 implementation based on an [[AmazonS3ClientBuilder]] which is the new
+ * way for constructing AWS client.
+ *
+ * @since May 10 2017
+ * @param builder [[AmazonS3ClientBuilder]] to build an [[AmazonS3]] instance.
+ */
 class BuildS3Client(builder: AmazonS3ClientBuilder) extends S3 {
   override val client: AmazonS3 = builder.build()
 }

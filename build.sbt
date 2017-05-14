@@ -9,7 +9,8 @@ lazy val root = (project in file(".")).settings(
   scalaVersion := "2.12.3",
   crossScalaVersions := Seq("2.12.3", "2.11.8", "2.10.6"),
   publishMavenStyle := true,
-  resolvers += "spray repo" at "http://repo.spray.io",
+  //resolvers += "spray repo" at "http://repo.spray.io",
+  resolvers += Resolver.bintrayRepo("findify", "maven"),
   libraryDependencies ++= Seq(
     // exclude dependencies directly on 'core' so do not have to add exclusions to all other aws-java dependencies.
     "com.amazonaws"    %  "aws-java-sdk-core"     % awsJavaSdkVersion excludeAll(
@@ -27,10 +28,11 @@ lazy val root = (project in file(".")).settings(
     "com.amazonaws"    %  "aws-java-sdk-simpledb" % awsJavaSdkVersion,
     "org.slf4j"        %  "jcl-over-slf4j"        % "1.7.25", // do aws libs logging over slf4j
     "com.github.seratch.com.veact" %% "scala-ssh" % "0.8.0-1" % "provided",
-    "org.bouncycastle" %  "bcprov-jdk16"          % "1.46"    % "provided",
-    "ch.qos.logback"   %  "logback-classic"       % "1.2.2"   % "test",
-    "org.scalatest"    %% "scalatest"             % "3.0.1"   % "test",
-    "io.findify"       %% "s3mock"                % "0.2.0"   % "test"
+    "org.bouncycastle" %  "bcprov-jdk16"          % "1.46"             % "provided",
+    "ch.qos.logback"   %  "logback-classic"       % "1.2.2"            % "test",
+    "org.scalatest"    %% "scalatest"             % "3.0.1"            % "test",
+    "io.findify"       %% "s3mock"                % "0.2.0"            % "test",
+    "io.findify"       %% "sqsmock"               % "0.3.3-SNAPSHOT"   % "test"
   ),
   sbtPlugin := false,
   transitiveClassifiers in Global := Seq(Artifact.SourceClassifier),
