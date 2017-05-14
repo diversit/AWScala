@@ -1,18 +1,44 @@
 package awscala
 
-import awscala._, sqs._
-
+import awscala._
+import com.amazonaws.auth.{ AWSCredentials, AWSCredentialsProvider, AnonymousAWSCredentials }
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
+import com.amazonaws.services.sqs.AmazonSQSClientBuilder
+import io.findify.sqsmock.SQSService
+import sqs._
 import org.slf4j._
 import org.scalatest._
 
-class SQSSpec extends FlatSpec with Matchers {
+class SQSSpec extends FlatSpec with Matchers with BeforeAndAfterAll {
+
+  var sqsMock: SQSService = _
+
+  val builder = AmazonSQSClientBuilder.standard()
+    // Note: url must NOT be 'localhost' since then an isValidIp check inside AWS classes fails
+    //       and then virtual addressing is used which means the bucketname is prepended to the domainname
+    //       which then cannot be resolved anymore to the local SQSService.
+    .withEndpointConfiguration(new EndpointConfiguration("http://127.0.0.1:8002", "us-east-1"))
+    .withCredentials(new AWSCredentialsProvider {
+      val credentials = new AnonymousAWSCredentials()
+      override def getCredentials: AWSCredentials = credentials
+      override def refresh(): Unit = ()
+    })
+
+  override protected def beforeAll(): Unit = {
+    sqsMock = new SQSService(port = 8002, account = 1)
+    sqsMock.start
+  }
+
+  override protected def afterAll(): Unit = {
+    sqsMock.stop
+  }
 
   behavior of "SQS"
 
   val log = LoggerFactory.getLogger(this.getClass)
 
   it should "provide cool APIs" in {
-    implicit val sqs = SQS.at(Region.Tokyo)
+    implicit val sqs = SQS(builder)
 
     // queues
     val queues = sqs.queues

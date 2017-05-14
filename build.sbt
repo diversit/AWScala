@@ -10,7 +10,8 @@ lazy val root = (project in file(".")).settings(
   scalaVersion := "2.12.1",
   crossScalaVersions := Seq("2.12.1", "2.11.8", "2.10.6"),
   publishMavenStyle := true,
-  resolvers += "spray repo" at "http://repo.spray.io",
+  //resolvers += "spray repo" at "http://repo.spray.io",
+  resolvers += Resolver.bintrayRepo("findify", "maven"),
   libraryDependencies ++= Seq(
     // exclude dependencies directly on 'core' so do not have to add exclusions to all other aws-java dependencies.
     "com.amazonaws"    %  "aws-java-sdk-core"     % awsJavaSdkVersion excludeAll(
@@ -31,7 +32,8 @@ lazy val root = (project in file(".")).settings(
     "org.bouncycastle" %  "bcprov-jdk16"          % "1.46"             % "provided",
     "ch.qos.logback"   %  "logback-classic"       % "1.2.2"            % "test",
     "org.scalatest"    %% "scalatest"             % "3.0.1"            % "test",
-    "io.findify"       %% "s3mock"                % "0.2.0"            % "test"
+    "io.findify"       %% "s3mock"                % "0.2.0"            % "test",
+    "io.findify"       %% "sqsmock"               % "0.3.3-SNAPSHOT"   % "test"
   ),
   sbtPlugin := false,
   transitiveClassifiers in Global := Seq(Artifact.SourceClassifier),
