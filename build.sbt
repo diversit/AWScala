@@ -1,6 +1,6 @@
 import xerial.sbt.Sonatype.autoImport._
 
-lazy val awsJavaSdkVersion = "1.11.184"
+lazy val awsJavaSdkVersion = "1.11.216"
 
 lazy val root = (project in file(".")).settings(
   organization := "com.github.seratch",
