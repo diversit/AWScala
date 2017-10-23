@@ -27,9 +27,8 @@ object DynamoDB {
 
   def local(): DynamoDB = {
     val builder = AmazonDynamoDBClientBuilder.standard()
-      .withRegion(Region.default().getName)
       .withEndpointConfiguration(
-        new AwsClientBuilder.EndpointConfiguration("http://localhost:8000", "us-west-2")
+        new AwsClientBuilder.EndpointConfiguration("http://localhost:8000", Region.default().getName)
       )
 
     DynamoDB(builder)

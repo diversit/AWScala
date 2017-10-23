@@ -38,7 +38,7 @@ class S3Spec extends FlatSpec with Matchers with BeforeAndAfterAll {
 
   it should "handle buckets with > 1000 objects in them " in {
 
-    implicit val s3 = S3.apply(builder)
+    implicit val s3 = S3(builder)
 
     // buckets
     val buckets = s3.buckets

@@ -6,7 +6,7 @@ import org.scalatest._
 import org.slf4j._
 import scala.util.Try
 
-class DynamoDBV2Spec extends FlatSpec with Matchers {
+class DynamoDBV2Spec extends FlatSpec with Matchers with LocalDynamoDB {
 
   behavior of "DynamoDB"
 
@@ -204,8 +204,9 @@ class DynamoDBV2Spec extends FlatSpec with Matchers {
     val members: Table = dynamoDB.table(tableName).get
 
     members.put(1, "Japan", "Name" -> List(Map("bar" -> "brack")), "Age" -> 23, "Company" -> "Google")
-    members.get(1, "Japan").get.attributes.find(_.name == "Name").get.value.m.get.get(0).getM()
-      .get("bar").getS() should equal("brack")
+
+    members.get(1, "Japan").get.attributes.find(_.name == "Name").get.value.l.head.getM
+      .get("bar").getS should equal("brack")
   }
 
   it should "provide cool APIs to use global secondary index" in {

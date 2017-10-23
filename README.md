@@ -137,7 +137,12 @@ https://github.com/seratch/awscala/blob/master/src/test/scala/awscala/EC2Spec.sc
 ```scala
 import awscala._, s3._
 
-implicit val s3 = S3.at(Region.Tokyo)
+// create a builder and apply all needed settings like region, endpoint url, credentials, etc
+val builder = AmazonS3ClientBuilder.standard()
+    .withRegion(Region.Tokyo.getName)
+
+// use the builder to create the S3 client
+implicit val s3 = S3(builder)
 
 val buckets: Seq[Bucket] = s3.buckets
 val bucket: Bucket = s3.createBucket("unique-name-xxx")
@@ -201,7 +206,12 @@ https://github.com/seratch/awscala/blob/master/src/main/scala/awscala/redshift/R
 ```scala
 import awscala._, dynamodbv2._
 
-implicit val dynamoDB = DynamoDB.at(Region.Tokyo)
+// create a builder and apply all needed settings like region, endpoint url, credentials, etc
+val builder = AmazonDynamoDBClientBuilder.standard()
+    .withRegion(Region.Tokyo.getName)
+
+// use the builder to create the DynamoDB client
+implicit val dynamoDB = DynamoDB(builder)
 
 val tableMeta: TableMeta = dynamoDB.createTable(
   name = "Members",
@@ -229,6 +239,8 @@ table.destroy()
 https://github.com/seratch/awscala/blob/master/src/main/scala/awscala/dynamodbv2/DynamoDB.scala
 
 https://github.com/seratch/awscala/blob/master/src/test/scala/awscala/DynamoDBV2Spec.scala
+
+Use `LocalDynamoDB` trait to start and stop a local dynamodb instance for testing.
 
 ### Amazon SimpleDB
 

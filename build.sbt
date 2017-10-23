@@ -7,7 +7,7 @@ lazy val root = (project in file(".")).settings(
   name := "awscala",
   version := "0.6.2-SNAPSHOT",
   scalaVersion := "2.12.3",
-  crossScalaVersions := Seq("2.12.3", "2.11.8", "2.10.6"),
+  crossScalaVersions := Seq("2.12.3", "2.11.8"),
   publishMavenStyle := true,
   //resolvers += "spray repo" at "http://repo.spray.io",
   resolvers += Resolver.bintrayRepo("findify", "maven"),
@@ -32,7 +32,9 @@ lazy val root = (project in file(".")).settings(
     "ch.qos.logback"   %  "logback-classic"       % "1.2.2"            % "test",
     "org.scalatest"    %% "scalatest"             % "3.0.1"            % "test",
     "io.findify"       %% "s3mock"                % "0.2.0"            % "test",
-    "io.findify"       %% "sqsmock"               % "0.3.3-SNAPSHOT"   % "test"
+    "io.findify"       %% "sqsmock"               % "0.3.3-SNAPSHOT"   % "test",
+    "com.amazonaws"            % "DynamoDBLocal"  % "1.11.86" % "test",
+    "com.almworks.sqlite4java" % "sqlite4java"    % "1.0.392" % "test"
   ),
   sbtPlugin := false,
   transitiveClassifiers in Global := Seq(Artifact.SourceClassifier),
