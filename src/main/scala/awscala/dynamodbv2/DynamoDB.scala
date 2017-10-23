@@ -1,8 +1,11 @@
 package awscala.dynamodbv2
 
 import awscala._
+
 import scala.collection.JavaConverters._
 import com.amazonaws.ClientConfiguration
+import com.amazonaws.client.builder.AwsClientBuilder
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.{ dynamodbv2 => aws }
 import com.amazonaws.services.dynamodbv2.model.KeysAndAttributes
 
@@ -10,18 +13,26 @@ object DynamoDB {
 
   def apply(credentials: Credentials)(implicit region: Region): DynamoDB = apply(BasicCredentialsProvider(credentials.getAWSAccessKeyId, credentials.getAWSSecretKey))(region)
   def apply(accessKeyId: String, secretAccessKey: String)(implicit region: Region): DynamoDB = apply(BasicCredentialsProvider(accessKeyId, secretAccessKey))(region)
-  def apply(credentialsProvider: CredentialsProvider = CredentialsLoader.load())(implicit region: Region = Region.default()): DynamoDB = new DynamoDBClient(credentialsProvider).at(region)
+  def apply(credentialsProvider: CredentialsProvider = CredentialsLoader.load())(implicit region: Region = Region.default()): DynamoDB = {
+    new DynamoDBClient(credentialsProvider, region)
+  }
 
   def apply(clientConfiguration: ClientConfiguration, credentials: Credentials)(implicit region: Region): DynamoDB = apply(clientConfiguration, BasicCredentialsProvider(credentials.getAWSAccessKeyId, credentials.getAWSSecretKey))(region)
   def apply(clientConfiguration: ClientConfiguration, accessKeyId: String, secretAccessKey: String)(implicit region: Region): DynamoDB = apply(clientConfiguration, BasicCredentialsProvider(accessKeyId, secretAccessKey))(region)
-  def apply(clientConfiguration: ClientConfiguration, credentialsProvider: CredentialsProvider)(implicit region: Region): DynamoDB = new ConfiguredDynamoDBClient(clientConfiguration, credentialsProvider).at(region)
+  def apply(clientConfiguration: ClientConfiguration, credentialsProvider: CredentialsProvider)(implicit region: Region): DynamoDB = new ConfiguredDynamoDBClient(clientConfiguration, credentialsProvider, region)
+
+  def apply(amazonDynamoDBClientBuilder: AmazonDynamoDBClientBuilder): DynamoDB = new BuildDynamoClient(amazonDynamoDBClientBuilder)
 
   def at(region: Region): DynamoDB = apply()(region)
 
   def local(): DynamoDB = {
-    val client = DynamoDB("", "")(Region.default())
-    client.setEndpoint("http://localhost:8000")
-    client
+    val builder = AmazonDynamoDBClientBuilder.standard()
+      .withRegion(Region.default().getName)
+      .withEndpointConfiguration(
+        new AwsClientBuilder.EndpointConfiguration("http://localhost:8000", "us-west-2")
+      )
+
+    DynamoDB(builder)
   }
 }
 
@@ -29,12 +40,9 @@ object DynamoDB {
  * Amazon DynamoDB Java client wrapper
  * @see [[http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/]]
  */
-trait DynamoDB extends aws.AmazonDynamoDB {
+trait DynamoDB {
 
-  def at(region: Region): DynamoDB = {
-    this.setRegion(region)
-    this
-  }
+  val client: aws.AmazonDynamoDB
 
   private[this] var consistentRead = false
 
@@ -47,12 +55,12 @@ trait DynamoDB extends aws.AmazonDynamoDB {
   // Tables
   // ------------------------------------------
 
-  def tableNames: Seq[String] = listTables.getTableNames.asScala
-  def lastEvaluatedTableName: Option[String] = Option(listTables.getLastEvaluatedTableName)
+  def tableNames: Seq[String] = client.listTables.getTableNames.asScala
+  def lastEvaluatedTableName: Option[String] = Option(client.listTables.getLastEvaluatedTableName)
 
   def describe(table: Table): Option[TableMeta] = describe(table.name)
   def describe(tableName: String): Option[TableMeta] = try {
-    Option(TableMeta(describeTable(new aws.model.DescribeTableRequest().withTableName(tableName)).getTable))
+    Option(TableMeta(client.describeTable(new aws.model.DescribeTableRequest().withTableName(tableName)).getTable))
   } catch { case e: aws.model.ResourceNotFoundException => None }
 
   /**
@@ -118,17 +126,17 @@ trait DynamoDB extends aws.AmazonDynamoDB {
       req.setGlobalSecondaryIndexes(table.globalSecondaryIndexes.map(_.asInstanceOf[aws.model.GlobalSecondaryIndex]).asJava)
     }
 
-    TableMeta(createTable(req).getTableDescription)
+    TableMeta(client.createTable(req).getTableDescription)
   }
 
   def updateTableProvisionedThroughput(table: Table, provisionedThroughput: ProvisionedThroughput): TableMeta = {
-    TableMeta(updateTable(
+    TableMeta(client.updateTable(
       new aws.model.UpdateTableRequest(table.name, provisionedThroughput)
     ).getTableDescription)
   }
 
   def delete(table: Table): Unit = deleteTable(table)
-  def deleteTable(table: Table): Unit = deleteTable(table.name)
+  def deleteTable(table: Table): Unit = client.deleteTable(table.name)
 
   // ------------------------------------------
   // Items
@@ -137,7 +145,7 @@ trait DynamoDB extends aws.AmazonDynamoDB {
   def get(table: Table, hashPK: Any): Option[Item] = getItem(table, hashPK)
 
   def getItem(table: Table, hashPK: Any): Option[Item] = try {
-    val attributes = getItem(new aws.model.GetItemRequest()
+    val attributes = client.getItem(new aws.model.GetItemRequest()
       .withTableName(table.name)
       .withKey(Map(table.hashPK -> AttributeValue.toJavaValue(hashPK)).asJava)
       .withConsistentRead(consistentRead)).getItem
@@ -152,7 +160,7 @@ trait DynamoDB extends aws.AmazonDynamoDB {
       case None => getItem(table, hashPK)
       case _ =>
         try {
-          val attributes = getItem(new aws.model.GetItemRequest()
+          val attributes = client.getItem(new aws.model.GetItemRequest()
             .withTableName(table.name)
             .withKey(Map(
               table.hashPK -> AttributeValue.toJavaValue(hashPK),
@@ -175,7 +183,7 @@ trait DynamoDB extends aws.AmazonDynamoDB {
       state match {
         case State(head :: tail, remaining) => (Some(head), State(tail, remaining))
         case State(Nil, remaining) if !remaining.isEmpty => {
-          val result = batchGetItem(new BatchGetItemRequest(remaining))
+          val result = client.batchGetItem(new BatchGetItemRequest(remaining))
           next(State(toItems(result).toList, result.getUnprocessedKeys()))
         }
         case State(Nil, remaining) if remaining.isEmpty => (None, state)
@@ -225,13 +233,13 @@ trait DynamoDB extends aws.AmazonDynamoDB {
 
   def put(table: Table, attributes: (String, Any)*): Unit = putItem(table.name, attributes: _*)
   def putItem(tableName: String, attributes: (String, Any)*): Unit = {
-    putItem(new aws.model.PutItemRequest()
+    client.putItem(new aws.model.PutItemRequest()
       .withTableName(tableName)
       .withItem(attributeValues(attributes)))
   }
 
   def putConditional(tableName: String, attributes: (String, Any)*)(cond: Seq[(String, aws.model.ExpectedAttributeValue)]): Unit = {
-    putItem(new aws.model.PutItemRequest()
+    client.putItem(new aws.model.PutItemRequest()
       .withTableName(tableName)
       .withItem(attributeValues(attributes))
       .withExpected(cond.toMap.asJava))
@@ -264,7 +272,7 @@ trait DynamoDB extends aws.AmazonDynamoDB {
 
     val tableKeys = Map(table.hashPK -> AttributeValue.toJavaValue(hashPK)) ++ rangePK.flatMap(rKey => table.rangePK.map(_ -> AttributeValue.toJavaValue(rKey)))
 
-    updateItem(new aws.model.UpdateItemRequest()
+    client.updateItem(new aws.model.UpdateItemRequest()
       .withTableName(table.name)
       .withKey(tableKeys.asJava)
       .withAttributeUpdates(attributes.map {
@@ -274,12 +282,12 @@ trait DynamoDB extends aws.AmazonDynamoDB {
   }
 
   def deleteItem(table: Table, hashPK: Any): Unit = {
-    deleteItem(new aws.model.DeleteItemRequest()
+    client.deleteItem(new aws.model.DeleteItemRequest()
       .withTableName(table.name)
       .withKey(Map(table.hashPK -> AttributeValue.toJavaValue(hashPK)).asJava))
   }
   def deleteItem(table: Table, hashPK: Any, rangePK: Any): Unit = {
-    deleteItem(new aws.model.DeleteItemRequest()
+    client.deleteItem(new aws.model.DeleteItemRequest()
       .withTableName(table.name)
       .withKey(Map(
         table.hashPK -> AttributeValue.toJavaValue(hashPK),
@@ -312,7 +320,7 @@ trait DynamoDB extends aws.AmazonDynamoDB {
       req.setAttributesToGet(attributesToGet.asJava)
     }
 
-    val pager = new QueryResultPager(table, query, req, pageStatsCallback)
+    val pager = new QueryResultPager(table, client.query, req, pageStatsCallback)
     pager.toSeq // will return a Stream[Item]
   } catch { case e: aws.model.ResourceNotFoundException => Nil }
 
@@ -339,7 +347,7 @@ trait DynamoDB extends aws.AmazonDynamoDB {
       req.setAttributesToGet(attributesToGet.asJava)
     }
 
-    val pager = new QueryResultPager(table, query, req, pageStatsCallback)
+    val pager = new QueryResultPager(table, client.query, req, pageStatsCallback)
     pager.toSeq // will return a Stream[Item]
   } catch { case e: aws.model.ResourceNotFoundException => Nil }
 
@@ -368,7 +376,7 @@ trait DynamoDB extends aws.AmazonDynamoDB {
       req.setAttributesToGet(attributesToGet.asJava)
     }
 
-    val pager = new ScanResultPager(table, scan, req, pageStatsCallback)
+    val pager = new ScanResultPager(table, client.scan, req, pageStatsCallback)
     pager.toSeq // will return a Stream[Item]
   } catch { case e: aws.model.ResourceNotFoundException => Nil }
 }
@@ -378,9 +386,17 @@ trait DynamoDB extends aws.AmazonDynamoDB {
  *
  * @param credentialsProvider credentialsProvider
  */
-class DynamoDBClient(credentialsProvider: CredentialsProvider = CredentialsLoader.load())
-  extends aws.AmazonDynamoDBClient(credentialsProvider)
-  with DynamoDB
+class DynamoDBClient(
+  credentialsProvider: CredentialsProvider = CredentialsLoader.load(),
+  region: Region
+)
+    extends DynamoDB {
+
+  override val client = aws.AmazonDynamoDBClientBuilder.standard()
+    .withCredentials(credentialsProvider)
+    .withRegion(region.getName)
+    .build()
+}
 
 /**
  * Configured Implementation
@@ -388,6 +404,28 @@ class DynamoDBClient(credentialsProvider: CredentialsProvider = CredentialsLoade
  * @param clientConfiguration clientConfiguration
  * @param credentialsProvider credentialsProvider
  */
-class ConfiguredDynamoDBClient(clientConfiguration: ClientConfiguration, credentialsProvider: CredentialsProvider = CredentialsLoader.load())
-  extends aws.AmazonDynamoDBClient(credentialsProvider, clientConfiguration)
-  with DynamoDB
+class ConfiguredDynamoDBClient(
+  clientConfiguration: ClientConfiguration,
+  credentialsProvider: CredentialsProvider = CredentialsLoader.load(),
+  region: Region
+)
+    extends DynamoDB {
+
+  override val client = aws.AmazonDynamoDBClientBuilder.standard()
+    .withClientConfiguration(clientConfiguration)
+    .withCredentials(credentialsProvider)
+    .withRegion(region.getName)
+    .build()
+}
+
+/**
+ * New [[awscala.dynamodbv2.DynamoDB]] implementation based on a [[com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder]]
+ * which is the new way of constructing a AWS DynamoDB Client.
+ *
+ * @since Oct 22 2017
+ * @param builder [[com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder]] to build an [[com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient]] instance.
+ */
+class BuildDynamoClient(builder: AmazonDynamoDBClientBuilder) extends DynamoDB {
+  override val client = builder.build()
+}
+
