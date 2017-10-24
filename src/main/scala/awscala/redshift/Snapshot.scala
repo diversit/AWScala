@@ -28,8 +28,8 @@ object Snapshot {
     totalBackupSizeInMegaBytes = s.getTotalBackupSizeInMegaBytes,
     vpcId = s.getVpcId,
     accountsWithRestoreAccess = s.getAccountsWithRestoreAccess.asScala.map(a => AccountWithRestoreAccess(a.getAccountId)).toSeq,
-    clusterCreatedAt = new DateTime(s.getClusterCreateTime),
-    snapshotCreatedAt = new DateTime(s.getSnapshotCreateTime)
+    clusterCreatedAt = DateTime.from(s.getClusterCreateTime),
+    snapshotCreatedAt = DateTime.from(s.getSnapshotCreateTime)
   )
 }
 

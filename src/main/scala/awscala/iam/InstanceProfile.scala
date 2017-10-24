@@ -12,7 +12,7 @@ object InstanceProfile {
     arn = g.getArn,
     path = g.getPath,
     roles = g.getRoles.asScala.map(r => Role(r)),
-    createdAt = new DateTime(g.getCreateDate)
+    createdAt = DateTime.from(g.getCreateDate)
   )
 }
 

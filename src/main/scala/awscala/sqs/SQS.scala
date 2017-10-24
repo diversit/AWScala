@@ -1,15 +1,19 @@
 package awscala.sqs
 
 import awscala._
+
 import scala.collection.JavaConverters._
 import com.amazonaws.services.{ sqs => aws }
 import com.amazonaws.auth.AWSSessionCredentials
+import com.amazonaws.services.sqs.{ AmazonSQS, AmazonSQSClientBuilder }
 
 object SQS {
 
   def apply(credentials: Credentials)(implicit region: Region): SQS = new SQSClient(BasicCredentialsProvider(credentials.getAWSAccessKeyId, credentials.getAWSSecretKey)).at(region)
   def apply(credentialsProvider: CredentialsProvider = CredentialsLoader.load())(implicit region: Region = Region.default()): SQS = new SQSClient(credentialsProvider).at(region)
   def apply(accessKeyId: String, secretAccessKey: String)(implicit region: Region): SQS = apply(BasicCredentialsProvider(accessKeyId, secretAccessKey)).at(region)
+
+  def apply(builder: AmazonSQSClientBuilder): SQS = new BuildSQSClient(builder)
 
   def at(region: Region): SQS = apply()(region)
 }
@@ -18,10 +22,12 @@ object SQS {
  * Amazon Simple Queue Service Java client wrapper
  * @see [[http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/]]
  */
-trait SQS extends aws.AmazonSQS {
+trait SQS {
+
+  val javaClient: aws.AmazonSQS
 
   def at(region: Region): SQS = {
-    this.setRegion(region)
+    javaClient.setRegion(region)
     this
   }
 
@@ -31,18 +37,18 @@ trait SQS extends aws.AmazonSQS {
 
   // createQueue is added since SDK 1.7.x
   def createQueueAndReturnQueueName(name: String): Queue = {
-    val result = createQueue(new aws.model.CreateQueueRequest(name))
+    val result = javaClient.createQueue(new aws.model.CreateQueueRequest(name))
     Queue(result.getQueueUrl)
   }
   def delete(queue: Queue): Unit = deleteQueue(queue)
-  def deleteQueue(queue: Queue): Unit = deleteQueue(new aws.model.DeleteQueueRequest(queue.url))
+  def deleteQueue(queue: Queue): Unit = javaClient.deleteQueue(new aws.model.DeleteQueueRequest(queue.url))
 
-  def queues: Seq[Queue] = listQueues().getQueueUrls.asScala.map(url => Queue(url)).toSeq
+  def queues: Seq[Queue] = javaClient.listQueues().getQueueUrls.asScala.map(url => Queue(url)).toSeq
 
   def queue(name: String): Option[Queue] = queues.find(_.url.split("/").last == name)
 
   def queueUrl(name: String): Option[String] = try {
-    Some(getQueueUrl(new aws.model.GetQueueUrlRequest(name)).getQueueUrl)
+    Some(javaClient.getQueueUrl(new aws.model.GetQueueUrlRequest(name)).getQueueUrl)
   } catch {
     case e: aws.model.QueueDoesNotExistException => None
   }
@@ -50,7 +56,7 @@ trait SQS extends aws.AmazonSQS {
   def withQueue[A](queue: Queue)(op: (SQSClientWithQueue) => A): A = op(new SQSClientWithQueue(this, queue))
 
   def queueAttributes(queue: Queue, attributeName: String): Map[String, String] = {
-    val result = getQueueAttributes(new aws.model.GetQueueAttributesRequest(queue.url, List(attributeName).asJava))
+    val result = javaClient.getQueueAttributes(new aws.model.GetQueueAttributesRequest(queue.url, List(attributeName).asJava))
     result.getAttributes.asScala.toMap
   }
 
@@ -60,14 +66,14 @@ trait SQS extends aws.AmazonSQS {
 
   def send(queue: Queue, messageBody: String): aws.model.SendMessageResult = sendMessage(queue, messageBody)
   def sendMessage(queue: Queue, messageBody: String): aws.model.SendMessageResult = {
-    sendMessage(new aws.model.SendMessageRequest(queue.url, messageBody))
+    javaClient.sendMessage(new aws.model.SendMessageRequest(queue.url, messageBody))
   }
   def sendMessages(queue: Queue, messageBodies: Seq[String]): aws.model.SendMessageBatchResult = {
     val batchId = Thread.currentThread.getId + "-" + System.nanoTime
     sendMessageBatch(queue, messageBodies.zipWithIndex.map { case (body, idx) => new MessageBatchEntry(s"${batchId}-${idx}", body) })
   }
   def sendMessageBatch(queue: Queue, messages: Seq[MessageBatchEntry]): aws.model.SendMessageBatchResult = {
-    sendMessageBatch(new aws.model.SendMessageBatchRequest(
+    javaClient.sendMessageBatch(new aws.model.SendMessageBatchRequest(
       queue.url,
       messages.map(_.asInstanceOf[aws.model.SendMessageBatchRequestEntry]).asJava
     ))
@@ -78,14 +84,14 @@ trait SQS extends aws.AmazonSQS {
   def receiveMessage(queue: Queue, count: Int = 10, wait: Int = 0, requestCredentials: Option[AWSSessionCredentials] = None): Seq[Message] = {
     val req = new aws.model.ReceiveMessageRequest(queue.url).withMaxNumberOfMessages(count).withWaitTimeSeconds(wait)
     requestCredentials.foreach(c => req.setRequestCredentials(c))
-    receiveMessage(req).getMessages.asScala.map(msg => Message(queue, msg)).toSeq
+    javaClient.receiveMessage(req).getMessages.asScala.map(msg => Message(queue, msg)).toSeq
   }
 
   def delete(message: Message) = deleteMessage(message)
   def deleteMessage(message: Message, requestCredentials: Option[AWSSessionCredentials] = None): Unit = {
     val request = new aws.model.DeleteMessageRequest(message.queue.url, message.receiptHandle)
     requestCredentials.foreach(c => request.setRequestCredentials(c))
-    deleteMessage(request)
+    javaClient.deleteMessage(request)
   }
   def deleteMessages(messages: Seq[Message], requestCredentials: Option[AWSSessionCredentials] = None): Unit = {
     val batchId = Thread.currentThread.getId + "-" + System.nanoTime
@@ -101,7 +107,7 @@ trait SQS extends aws.AmazonSQS {
       messages.map(_.asInstanceOf[aws.model.DeleteMessageBatchRequestEntry]).asJava
     )
     requestCredentials.foreach(c => request.setRequestCredentials(c))
-    deleteMessageBatch(request)
+    javaClient.deleteMessageBatch(request)
   }
 
 }
@@ -139,8 +145,23 @@ class SQSClientWithQueue(sqs: SQS, queue: Queue) {
  * Default Implementation
  *
  * @param credentialsProvider credentialsProvider
+ * @deprecated Old way of constructing [[AmazonSQS]] instance. Use builder instance.
  */
 class SQSClient(credentialsProvider: CredentialsProvider = CredentialsLoader.load())
-  extends aws.AmazonSQSClient(credentialsProvider)
-  with SQS
+    extends SQS {
+
+  override val javaClient: AmazonSQS = new aws.AmazonSQSClient(credentialsProvider)
+}
+
+/**
+ * New S3 implementation based on an [[AmazonSQSClientBuilder]] which is the new
+ * way for constructing an AWS client.
+ *
+ * @since May 11 2017
+ * @param builder [[AmazonSQSClientBuilder]] to build an [[AmazonSQS]] instance.
+ */
+class BuildSQSClient(builder: AmazonSQSClientBuilder) extends SQS {
+
+  override val javaClient: AmazonSQS = builder.build()
+}
 

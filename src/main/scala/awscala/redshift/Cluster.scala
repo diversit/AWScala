@@ -28,7 +28,7 @@ object Cluster {
     securityGroupMemberships = c.getClusterSecurityGroups.asScala.map(m => ClusterSecurityGroupMembership(m)),
     vpcId = c.getVpcId,
     vpcSecurityGroupMemberships = c.getVpcSecurityGroups.asScala.map(m => VpcSecurityGroupMembership(m)),
-    createdAt = new DateTime(c.getClusterCreateTime)
+    createdAt = DateTime.from(c.getClusterCreateTime)
   )
 }
 

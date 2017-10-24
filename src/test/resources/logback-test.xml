@@ -1,0 +1,18 @@
+<configuration>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <!-- encoders are assigned the type
+         ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="org.apache.http" level="info"/><!-- set to debug to see http details -->
+  <logger name="io.findify" level="warn"/><!-- set to info or debug to see details of S3Mock-ing -->
+  <logger name="com.amazonaws" level="info"/><!-- set to debug to see detail of AWS Java Lib -->
+
+  <root level="debug">
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>

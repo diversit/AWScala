@@ -9,6 +9,20 @@ AWScala enables Scala developers to easily work with Amazon Web Services in the 
 
 Though AWScala objects basically extend AWS SDK for Java APIs, you can use them with less stress on Scala REPL or `sbt console`.
 
+## Changes regarding original
+This is a fork of seratch/AWScala repo.
+I wanted to have up-to-date AWS libraries so I made these changes:
+- Updated AWS Java SDK dependencies to 1.11.126 (fixed a compile issue in EMR class)
+- Changed S3 to have a AmazonS3 property named 'client' instead of S3 extending AmazonS3 to allow an AmazonS3Client to be build using an AmazonS3ClientBuilder, which is currently the preferred way. Directly creating an AmazonS3Client instance via a constructor is now deprecated.
+- Updated S3Spec so S3 can now be tested using S3Mock so no real S3 instance/connection is needed anymore.
+- Updated logging
+  - Updated logback-classic dependency to 1.2.2
+  - Excluded commons-logging dependency from all AWS Java SDK dependencies.
+  - Added jcl-over-slf4j so now also the AWS Java SDK logging is over SLF4J.
+  - Updated logback-test.xml configuration.
+- Replaced joda-time's DateTime with java 8's OffsetDateTime.
+- Added S3.putObjectAsPublicRead with InputStream argument.
+
 ## Supported Services
 
 http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/
@@ -123,7 +137,12 @@ https://github.com/seratch/awscala/blob/master/src/test/scala/awscala/EC2Spec.sc
 ```scala
 import awscala._, s3._
 
-implicit val s3 = S3.at(Region.Tokyo)
+// create a builder and apply all needed settings like region, endpoint url, credentials, etc
+val builder = AmazonS3ClientBuilder.standard()
+    .withRegion(Region.Tokyo.getName)
+
+// use the builder to create the S3 client
+implicit val s3 = S3(builder)
 
 val buckets: Seq[Bucket] = s3.buckets
 val bucket: Bucket = s3.createBucket("unique-name-xxx")
@@ -187,7 +206,12 @@ https://github.com/seratch/awscala/blob/master/src/main/scala/awscala/redshift/R
 ```scala
 import awscala._, dynamodbv2._
 
-implicit val dynamoDB = DynamoDB.at(Region.Tokyo)
+// create a builder and apply all needed settings like region, endpoint url, credentials, etc
+val builder = AmazonDynamoDBClientBuilder.standard()
+    .withRegion(Region.Tokyo.getName)
+
+// use the builder to create the DynamoDB client
+implicit val dynamoDB = DynamoDB(builder)
 
 val tableMeta: TableMeta = dynamoDB.createTable(
   name = "Members",
@@ -215,6 +239,8 @@ table.destroy()
 https://github.com/seratch/awscala/blob/master/src/main/scala/awscala/dynamodbv2/DynamoDB.scala
 
 https://github.com/seratch/awscala/blob/master/src/test/scala/awscala/DynamoDBV2Spec.scala
+
+Use `LocalDynamoDB` trait to start and stop a local dynamodb instance for testing.
 
 ### Amazon SimpleDB
 

@@ -8,7 +8,7 @@ object LoginProfile {
 
   def apply(user: User, g: aws.model.LoginProfile): LoginProfile = new LoginProfile(
     user = user,
-    createdAt = new DateTime(g.getCreateDate)
+    createdAt = DateTime.from(g.getCreateDate)
   )
 }
 
